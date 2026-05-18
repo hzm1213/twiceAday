@@ -1,5 +1,8 @@
 name: Update V2RaySE Nodes
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   schedule:
     # 北京时间 08:30 -> UTC 20:30
@@ -14,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Generate URL and Download
         run: |
