@@ -2,10 +2,10 @@ name: Update V2RaySE Nodes
 
 on:
   schedule:
-    # 北京时间 08:30 -> UTC 00:30
-    - cron: '30 0 * * *'
+    # 北京时间 08:30 -> UTC 20:30
+    - cron: '30 20 * * *'
     # 北京时间 20:30 -> UTC 12:30
-    - cron: '30 12 * * *'
+    - cron: '00 11 * * *'
   workflow_dispatch:
 
 jobs:
