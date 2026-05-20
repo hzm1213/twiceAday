@@ -5,10 +5,12 @@ env:
 
 on:
   schedule:
-    # 北京时间 08:30 -> UTC 00:30
-    - cron: '30 0 * * *'
-    # 北京时间 20:30 -> UTC 12:30
-    - cron: '30 12 * * *'
+    # 北京时间 08:37
+    - cron: '37 0 * * *'
+
+    # 北京时间 20:37
+    - cron: '37 12 * * *'
+
   workflow_dispatch:
 
 jobs:
@@ -19,39 +21,68 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Generate URL and Download
+      - name: Set TIME
         run: |
-          DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
-          HOUR=$(TZ='Asia/Shanghai' date +%H)
+          NOW=$(TZ='Asia/Shanghai' date +%H%M)
 
-          if [ "$HOUR" -lt 12 ]; then
-            TIME="0800"
+          echo "Current Beijing Time: $NOW"
+
+          # 0800-1959 下载0800
+          # 2000-0759 下载2000
+          if [ "$NOW" -ge 800 ] && [ "$NOW" -le 1959 ]; then
+            echo "TIME=0800" >> $GITHUB_ENV
           else
-            TIME="2000"
+            echo "TIME=2000" >> $GITHUB_ENV
           fi
 
+      - name: Wait and Download
+        run: |
+          DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
+
           URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
+
           FILE="free-node-share.txt"
 
-          echo "Downloading: $URL"
+          echo "Target URL:"
+          echo "$URL"
 
           SUCCESS=0
-          for i in 1 2 3 4 5; do
-            echo "Attempt $i ..."
-            curl -L --connect-timeout 15 --retry 3 --retry-delay 5 -o "$FILE" "$URL"
 
-            if [ -s "$FILE" ]; then
-              SUCCESS=1
-              echo "Download succeeded on attempt $i"
-              break
-            else
-              echo "Download failed or empty, retrying ..."
-              sleep 5
+          # 最多等待24次（约4小时）
+          for i in $(seq 1 24); do
+
+            echo "Check attempt $i..."
+
+            STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" "$URL")
+
+            echo "HTTP Status: $STATUS"
+
+            if [ "$STATUS" = "200" ]; then
+
+              echo "File exists, downloading..."
+
+              curl -L \
+                --retry 5 \
+                --retry-delay 10 \
+                --connect-timeout 20 \
+                -o "$FILE" \
+                "$URL"
+
+              # 检查文件是否有效
+              if [ -s "$FILE" ]; then
+                SUCCESS=1
+                echo "Download success"
+                break
+              fi
             fi
+
+            echo "File not ready, wait 10 minutes..."
+            sleep 600
+
           done
 
           if [ "$SUCCESS" -ne 1 ]; then
-            echo "All download attempts failed. Exiting."
+            echo "File never appeared"
             exit 1
           fi
 
@@ -61,8 +92,9 @@ jobs:
           git config --global user.email "github-actions@github.com"
 
           git add free-node-share.txt
+
           git diff --cached --quiet || (
-            git commit -m "Update node share"
+            git commit -m "Update ${TIME} nodes"
             git push
           )
 
@@ -71,10 +103,11 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          DATE=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
-          MESSAGE="✅ V2RaySE节点${TIME}已更新成功：$DATE"
+          NOW=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
 
-          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
-            -d chat_id="$TELEGRAM_CHAT_ID" \
-            -d text="$MESSAGE" \
-            -d parse_mode="Markdown"
+          MESSAGE="✅ V2RaySE节点${TIME}已更新成功：${NOW}，下载链接：https://v2rayse.com/fs/public/$(TZ='Asia/Shanghai' date +%Y%m%d)/free-node-share-${TIME}.txt"
+
+          curl -s -X POST \
+            "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode text="${MESSAGE}"
