@@ -72,7 +72,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           DATE=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
-          MESSAGE="✅ V2RaySE节点已更新成功：$DATE"
+          MESSAGE="✅ V2RaySE节点${TIME}已更新成功：$DATE"
 
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
             -d chat_id="$TELEGRAM_CHAT_ID" \
