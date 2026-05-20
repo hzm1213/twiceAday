@@ -120,7 +120,7 @@ jobs:
         run: |
           NOW=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
 
-          MESSAGE="✅ ${DATE}${TIME}V2RaySE节点已更新成功：${NOW}，下载链接：https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
+          MESSAGE="✅ ${DATE}${TIME}，V2RaySE节点已更新成功：${NOW}，下载链接：https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
 
           curl -s -X POST \
             "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
