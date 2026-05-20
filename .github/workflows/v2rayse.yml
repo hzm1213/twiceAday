@@ -21,24 +21,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set TIME
+      - name: Set TIME and DATE
         run: |
           NOW=$(TZ='Asia/Shanghai' date +%H%M)
 
           echo "Current Beijing Time: $NOW"
 
-          # 0800-1959 下载0800
-          # 2000-0759 下载2000
+          # 08:00-19:59 -> 当天0800
           if [ "$NOW" -ge 800 ] && [ "$NOW" -le 1959 ]; then
-            echo "TIME=0800" >> $GITHUB_ENV
+
+            TIME="0800"
+            DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
+
           else
-            echo "TIME=2000" >> $GITHUB_ENV
+
+            TIME="2000"
+
+            # 00:00-07:59 -> 前一天2000
+            if [ "$NOW" -lt 800 ]; then
+              DATE=$(TZ='Asia/Shanghai' date -d "yesterday" +%Y%m%d)
+            else
+              # 20:00-23:59 -> 当天2000
+              DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
+            fi
+
           fi
+
+          echo "TIME=$TIME" >> $GITHUB_ENV
+          echo "DATE=$DATE" >> $GITHUB_ENV
+
+          echo "Selected DATE=$DATE"
+          echo "Selected TIME=$TIME"
 
       - name: Wait and Download
         run: |
-          DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
-
           URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
 
           FILE="free-node-share.txt"
@@ -68,7 +84,6 @@ jobs:
                 -o "$FILE" \
                 "$URL"
 
-              # 检查文件是否有效
               if [ -s "$FILE" ]; then
                 SUCCESS=1
                 echo "Download success"
@@ -105,7 +120,7 @@ jobs:
         run: |
           NOW=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
 
-          MESSAGE="✅ V2RaySE节点${TIME}已更新成功：${NOW}，下载链接：https://v2rayse.com/fs/public/$(TZ='Asia/Shanghai' date +%Y%m%d)/free-node-share-${TIME}.txt"
+          MESSAGE="✅ ${DATE}${TIME}V2RaySE节点已更新成功：${NOW}，下载链接：https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
 
           curl -s -X POST \
             "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
