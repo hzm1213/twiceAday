@@ -5,10 +5,10 @@ env:
 
 on:
   schedule:
-    # 北京时间 08:30 -> UTC 0:43
-    - cron: '43 0 * * *'
-    # 北京时间 20:30 -> UTC 12:47
-    - cron: '47 12 * * *'
+    # 北京时间 08:30 -> UTC 5:30
+    - cron: '30 5 * * *'
+    # 北京时间 20:30 -> UTC 17:30
+    - cron: '30 17 * * *'
   workflow_dispatch:
 
 jobs:
