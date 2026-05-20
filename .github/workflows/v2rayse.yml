@@ -5,40 +5,35 @@ env:
 
 on:
   schedule:
-    # 北京时间 08:30 -> UTC 0:30
+    # 北京时间 08:30 -> UTC 00:30
     - cron: '30 0 * * *'
     # 北京时间 20:30 -> UTC 12:30
     - cron: '30 12 * * *'
   workflow_dispatch:
 
 jobs:
-  update-morning:
-    if: github.event.schedule == '37 0 * * *'
+  update:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Download 0800
+      - name: Generate URL and Download
         run: |
           DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
-          URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-0800.txt"
+          HOUR=$(TZ='Asia/Shanghai' date +%H)
 
-          curl -L --retry 5 -o free-node-share.txt "$URL"
+          if [ "$HOUR" -lt 12 ]; then
+            TIME="0800"
+          else
+            TIME="2000"
+          fi
 
-  update-evening:
-    if: github.event.schedule == '37 12 * * *'
-    runs-on: ubuntu-latest
+          URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
+          FILE="free-node-share.txt"
 
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download 2000
-        run: |
-          DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
-          URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-2000.txt"
-
-          curl -L --retry 5 -o free-node-share.txt "$URL"
+          echo "Downloading: $URL"
 
           SUCCESS=0
           for i in 1 2 3 4 5; do
