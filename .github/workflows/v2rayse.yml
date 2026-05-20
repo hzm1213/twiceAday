@@ -12,28 +12,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  update:
+  update-morning:
+    if: github.event.schedule == '37 0 * * *'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
-      - name: Generate URL and Download
+      - name: Download 0800
         run: |
           DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
-          HOUR=$(TZ='Asia/Shanghai' date +%H)
+          URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-0800.txt"
 
-          if [ "$HOUR" -lt 12 ]; then
-            TIME="0800"
-          else
-            TIME="2000"
-          fi
+          curl -L --retry 5 -o free-node-share.txt "$URL"
 
-          URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-${TIME}.txt"
-          FILE="free-node-share.txt"
+  update-evening:
+    if: github.event.schedule == '37 12 * * *'
+    runs-on: ubuntu-latest
 
-          echo "Downloading: $URL"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download 2000
+        run: |
+          DATE=$(TZ='Asia/Shanghai' date +%Y%m%d)
+          URL="https://v2rayse.com/fs/public/${DATE}/free-node-share-2000.txt"
+
+          curl -L --retry 5 -o free-node-share.txt "$URL"
 
           SUCCESS=0
           for i in 1 2 3 4 5; do
